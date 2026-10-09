@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Renewly">
+<title>Renewly</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF1F5;--card:#fff;--ink:#14213D;--mute:#667085;--line:#DDE3EC;--acc:#0F8F7E;--accInk:#fff;--warn:#D6453D;--soft:#E3F3F0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1524;--card:#17203A;--ink:#EAF0FA;--mute:#98A4BC;--line:#26324F;--acc:#3CC4AF;--accInk:#06251F;--warn:#FF7A70;--soft:#12332F}}
+:root[data-theme="dark"]{--bg:#0E1524;--card:#17203A;--ink:#EAF0FA;--mute:#98A4BC;--line:#26324F;--acc:#3CC4AF;--accInk:#06251F;--warn:#FF7A70;--soft:#12332F}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif;min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:20px 16px 110px}
+h1,h2,.amt{font-family:"Bricolage Grotesque",-apple-system,system-ui,sans-serif}
+h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 16px}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:16px}
+.tabs button{flex:1;border:0;background:none;color:var(--mute);font:inherit;font-weight:600;padding:10px;border-radius:10px}
+.tabs button.on{background:var(--acc);color:var(--accInk)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.row>:first-child{flex:1;min-width:0}.row>:last-child{flex:none}
+.name,.cn{overflow-wrap:anywhere}
+.name{font-weight:700;font-size:17px}.amt{font-weight:700;font-size:18px}
+.meta{color:var(--mute);font-size:14px;margin-top:2px}
+.due{font-weight:600;font-size:14px;color:var(--acc)}.due.soon{color:var(--warn)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--acc);margin-right:6px}
+.acts{display:flex;gap:8px;margin-top:12px}
+.btn{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:14px;font-weight:600;padding:8px 12px;border-radius:10px}
+.btn.p{background:var(--acc);border-color:var(--acc);color:var(--accInk)}.btn.d{color:var(--warn)}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--acc);color:var(--accInk);border:0;font:inherit;font-weight:700;font-size:16px;padding:14px 22px;border-radius:99px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%;text-align:center}.toast.on{opacity:1}
+.empty{text-align:center;color:var(--mute);padding:36px 12px}
+.cust{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.cn{font-weight:600}.cm{color:var(--mute);font-size:13px}
+.st{border:0;font:inherit;font-size:13px;font-weight:700;padding:7px 12px;border-radius:99px;min-width:76px}
+.st.pd{background:var(--soft);color:var(--acc)}.st.up{background:var(--warn);color:#fff}
+.x{border:0;background:none;color:var(--mute);font-size:13px;padding:6px}
+.due{border:0;background:none;padding:0;font-family:inherit;text-align:right;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+.acts{flex-wrap:wrap}.btn:disabled{opacity:.55}
+.sub{color:var(--mute);margin:0 0 14px;font-size:14px}
+.ro .fab,.ro .acts,.ro .x{display:none}.ro .st{pointer-events:none}
+.cap{font-size:13px;font-weight:600;color:var(--mute);margin-top:12px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:5}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:100%;max-width:520px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:92vh;overflow:auto}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;font:inherit;font-size:16px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:13px;color:var(--mute);margin-top:4px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style></head><body>
+<main>
+  <h1>Renewly</h1>
+  <p class="sub" id="status"></p>
+  <div id="imp"></div>
+  <div class="tabs"><button id="t1" class="on">Accounts</button><button id="t2">Who owes me</button></div>
+  <div id="view"></div>
+</main>
+<button class="fab" id="add">+ Add account</button>
+<div class="toast" id="toast" role="status"></div>
+
+<div class="sheet" id="sheet"><div class="panel">
+  <h2 style="margin:0 0 4px">Add account</h2>
+  <label for="f_name">Account name</label><input id="f_name" placeholder="Netflix Premium #1">
+  <div class="two">
+    <div><label for="f_amt">Account price (৳)</label><input id="f_amt" type="number" inputmode="decimal" placeholder="1200"></div>
+    <div><label for="f_cycle">Repeats</label><select id="f_cycle"><option value="30">Every 30 days</option><option value="45">Every 45 days</option><option value="60">Every 60 days</option><option value="180">Every 180 days</option><option value="365">Every 365 days</option></select></div>
+  </div>
+  <div>
+    <div><label for="f_method">Pay with</label><select id="f_method"><option>bKash</option><option>Nagad</option><option>Rocket</option><option>Card</option><option>Bank</option><option>Cash</option></select></div>
+  </div>
+  <div class="hint">A new account starts at 0 days. Tap Mark renewed to start the countdown. You can add up to 5 customers after saving.</div>
+  <div class="acts"><button class="btn p" id="save">Save account</button><button class="btn" id="cancel">Cancel</button></div>
+</div></div>
+
+<div class="sheet" id="csheet"><div class="panel">
+  <h2 style="margin:0 0 4px" id="ctitle">Add customer</h2>
+  <label for="c_name">Customer name</label><input id="c_name" placeholder="Rafi">
+  <label for="c_amt">Their bill (৳)</label><input id="c_amt" type="number" inputmode="decimal" placeholder="350">
+  <div class="acts"><button class="btn p" id="csave">Save customer</button><button class="btn" id="ccancel">Cancel</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2600)}
+const shown=new Set();const MAX=5;let subs=[],tab=1,pending=null,curAcc=null;
+let local=[];try{local=JSON.parse(localStorage.getItem("renewly")||"[]")}catch(e){}
+let col=null,canWrite=true,ready=false;const q={},last={};
+const clean=o=>JSON.parse(JSON.stringify(o));
+const saveLocal=()=>{try{localStorage.setItem("renewly",JSON.stringify(subs))}catch(e){}};
+function failed(e){toast(e&&e.code=="invalid_argument"?"You can view this but not edit it.":"Couldn't save. Check your connection.")}
+function queue(id,fn){q[id]=(q[id]||Promise.resolve()).then(fn).catch(failed)}
+function store(){
+  if(!col){saveLocal();return}
+  const ids=new Set(subs.map(x=>x.id));
+  subs.forEach(x=>{const j=JSON.stringify(x);if(last[x.id]!==j){last[x.id]=j;queue(x.id,()=>col.doc(x.id).set(clean(x)))}});
+  Object.keys(last).forEach(id=>{if(!ids.has(id)){delete last[id];queue(id,()=>col.doc(id).delete())}});
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>"৳"+Math.round(n).toLocaleString("en-US");
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const days=s=>Math.round((new Date(s+"T00:00")-today())/864e5);
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function advance(s,c){const d=new Date(s+"T00:00");d.setDate(d.getDate()+Number(c));return iso(d)}
+const fmtD=d=>new Date(d+"T00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+function showD(id){shown.has(id)?shown.delete(id):shown.add(id);render()}
+function when(n){return n<0?`${-n} day${n==-1?"":"s"} overdue`:`${n} day${n==1?"":"s"}`}
+
+local.forEach(s=>{
+  const m={weekly:30,monthly:30,yearly:365};if(m[s.cycle])s.cycle=m[s.cycle];
+  if(!s.customers){const w=s.with||[];s.customers=w.slice(0,MAX).map(p=>({name:p.name,amount:Math.round(s.amount/(w.length+1)),paid:!!p.paid}))}
+  delete s.with;
+  if(s.lastRenewed&&days(s.date)>Number(s.cycle)){s.date=advance(s.lastRenewed,s.cycle);if(s.undo)s.undo.date=s.lastRenewed}
+});
+function render(){
+  $("t1").classList.toggle("on",tab==1);$("t2").classList.toggle("on",tab==2);
+  document.body.classList.toggle("ro",!canWrite);
+  $("status").textContent=!col?"Saved on this phone only":canWrite?"Shared: changes sync live for everyone with access":"View only: you can't make changes";
+  $("imp").innerHTML=(col&&canWrite&&local.length)?`<div class="item"><div class="name">Import from this phone</div><div class="meta">Found ${local.length} account${local.length>1?"s":""} saved here before sharing. Import to add ${local.length>1?"them":"it"} to the shared list.</div><div class="acts"><button class="btn p" onclick="importLocal()">Import</button></div></div>`:"";
+  $("view").innerHTML=!ready?`<div class="empty">Loading…</div>`:tab==1?accounts():owes();
+}
+function accounts(){
+  if(!subs.length)return `<div class="empty">No accounts yet.<br>Tap <b>+ Add account</b>, then add up to 5 customers to each one.<br><br><button class="btn" onclick="demo()">Load examples</button></div>`;
+  return [...subs].sort((a,b)=>a.date<b.date?-1:1).map(s=>{
+    const n=days(s.date),c=s.customers,un=c.filter(x=>!x.paid),owed=un.reduce((a,x)=>a+x.amount,0);
+    const cap=c.length?`${c.length}/${MAX} customers · ${un.length?`${un.length} unpaid (${money(owed)})`:"all paid"}`:`0/${MAX} customers`;
+    return `<div class="item"><div class="row"><div><div class="name">${esc(s.name)}</div>
+      <div class="meta"><span class="chip">${esc(s.method)}</span>every ${s.cycle} days</div></div>
+      <div style="text-align:right"><div class="amt">${money(s.amount)}</div><button class="due ${n<=3?"soon":""}" onclick="showD('${s.id}')" aria-label="Show renewal date">${shown.has(s.id)?fmtD(s.date):when(n)}</button></div></div>
+      <div class="cap">${cap}</div>
+      ${c.map((x,i)=>`<div class="cust"><div><div class="cn">${esc(x.name)}</div><div class="cm">${money(x.amount)}</div></div>
+        <div><button class="st ${x.paid?"pd":"up"}" onclick="pay('${s.id}',${i})">${x.paid?"Paid":"Unpaid"}</button>
+        <button class="x" onclick="rmc('${s.id}',${i})">${pending==s.id+"/"+i?"Sure?":"Remove"}</button></div></div>`).join("")}
+      <div class="acts"><button class="btn" onclick="addC('${s.id}')" ${c.length>=MAX?"disabled":""}>+ Add customer</button>
+      ${renewedNow(s)?`<button class="btn" disabled>Renewed this month</button><button class="btn" onclick="undo('${s.id}')">Undo</button>`:`<button class="btn p" onclick="renew('${s.id}')">${pending=="r"+s.id?"Tap again to renew":"Mark renewed"}</button>`}
+      <button class="btn d" onclick="del('${s.id}')">${pending==s.id?"Tap again":"Delete"}</button></div></div>`}).join("");
+}
+function owes(){
+  const by={};
+  subs.forEach(s=>s.customers.forEach((x,i)=>{const k=x.name.trim().toLowerCase();(by[k]=by[k]||[]).push({s,x,i})}));
+  const keys=Object.keys(by);
+  if(!keys.length)return `<div class="empty">No customers yet.<br>Open an account and tap <b>+ Add customer</b>.</div>`;
+  return keys.map(k=>{const rows=by[k],tot=rows.filter(r=>!r.x.paid).reduce((a,r)=>a+r.x.amount,0);
+    return `<div class="item"><div class="row"><div class="name">${esc(rows[0].x.name)}</div><div class="amt" style="color:${tot?"var(--warn)":"var(--acc)"}">${tot?money(tot):"All paid"}</div></div>
+    ${rows.map(r=>`<div class="cust"><div><div class="cn">${esc(r.s.name)}</div><div class="cm">${money(r.x.amount)} · due ${r.s.date}</div></div>
+      <button class="st ${r.x.paid?"pd":"up"}" onclick="pay('${r.s.id}',${r.i})">${r.x.paid?"Paid":"Unpaid"}</button></div>`).join("")}
+    ${tot?`<div class="acts"><button class="btn p" data-k="${esc(k)}" onclick="remind(this.dataset.k)">Copy reminder</button></div>`:""}</div>`}).join("");
+}
+async function importLocal(){
+  try{for(const x of local){await col.doc(x.id).set(clean(x))}
+    try{localStorage.removeItem("renewly")}catch(e){}
+    toast(`Imported ${local.length} account${local.length>1?"s":""}.`);local=[];render();
+  }catch(e){failed(e)}
+}
+function pay(id,i){const x=subs.find(s=>s.id==id).customers[i];x.paid=!x.paid;store();render()}
+const renewedNow=s=>s.lastRenewed&&s.lastRenewed.slice(0,7)==iso(today()).slice(0,7);
+function renew(id){
+  const s=subs.find(x=>x.id==id);
+  if(renewedNow(s)){toast("Already renewed this month.");return}
+  twice("r"+id,()=>{
+    s.undo={date:s.date,paid:s.customers.map(x=>x.paid)};
+    s.date=advance(iso(today()),s.cycle);s.customers.forEach(x=>x.paid=false);s.lastRenewed=iso(today());
+    toast("Renewed. All customers are unpaid again.");
+  });
+}
+function undo(id){
+  const s=subs.find(x=>x.id==id);if(!s.undo)return;
+  s.date=s.undo.date;s.customers.forEach((x,i)=>{if(i<s.undo.paid.length)x.paid=s.undo.paid[i]});
+  s.lastRenewed=null;delete s.undo;store();render();toast("Renewal undone.");
+}
+function twice(key,fn){
+  if(pending==key){pending=null;fn();store();render();return}
+  pending=key;render();setTimeout(()=>{if(pending==key){pending=null;render()}},4000);
+}
+function del(id){twice(id,()=>{subs=subs.filter(x=>x.id!=id)})}
+function rmc(id,i){twice(id+"/"+i,()=>{subs.find(s=>s.id==id).customers.splice(i,1)})}
+function remind(k){
+  const rows=subs.flatMap(s=>s.customers.filter(x=>x.name.trim().toLowerCase()==k&&!x.paid).map(x=>({s,x})));
+  const tot=rows.reduce((a,r)=>a+r.x.amount,0);
+  const nm=rows[0].x.name;
+  const msg=`Hi ${nm}, a quick reminder: your bill of ${money(tot)} for ${rows.map(r=>r.s.name).join(", ")} is unpaid. You can send it via ${[...new Set(rows.map(r=>r.s.method))].join(" / ")}. Thanks!`;
+  const fb=()=>{const a=document.createElement("textarea");a.value=msg;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();toast(ok?"Reminder copied. Paste it into WhatsApp.":"Couldn't copy. Try again.")};
+  (navigator.clipboard?navigator.clipboard.writeText(msg).then(()=>toast("Reminder copied. Paste it into WhatsApp."),fb):Promise.reject()).catch(fb);
+}
+function demo(){
+  const d=n=>{const x=today();x.setDate(x.getDate()+n);return iso(x)};
+  const c=(name,amount,paid)=>({name,amount,paid});
+  subs=[{id:"a1",name:"Netflix Premium #1",amount:1200,cycle:30,date:d(2),method:"bKash",customers:[c("Rafi",350,true),c("Nila",350,false),c("Sabbir",350,false)]},
+        {id:"a2",name:"Spotify Family",amount:600,cycle:60,date:d(9),method:"Nagad",customers:[c("Rafi",150,false)]}];
+  store();render();
+}
+const sheet=$("sheet"),csheet=$("csheet");
+$("add").onclick=()=>{["f_name","f_amt"].forEach(i=>$(i).value="");sheet.classList.add("open")};
+$("cancel").onclick=()=>sheet.classList.remove("open");
+sheet.onclick=e=>{if(e.target==sheet)sheet.classList.remove("open")};
+$("save").onclick=()=>{
+  const name=$("f_name").value.trim(),amount=parseFloat($("f_amt").value),date=iso(today());
+  if(!name||!(amount>0)){toast("Add a name and a price above 0.");return}
+  subs.push({id:"s"+Date.now(),name,amount,cycle:Number($("f_cycle").value),date,method:$("f_method").value,customers:[]});
+  store();sheet.classList.remove("open");render();
+};
+function addC(id){curAcc=id;const s=subs.find(x=>x.id==id);$("ctitle").textContent=`Add customer to ${s.name}`;$("c_name").value="";$("c_amt").value="";csheet.classList.add("open")}
+$("ccancel").onclick=()=>csheet.classList.remove("open");
+csheet.onclick=e=>{if(e.target==csheet)csheet.classList.remove("open")};
+$("csave").onclick=()=>{
+  const s=subs.find(x=>x.id==curAcc),name=$("c_name").value.trim(),amount=parseFloat($("c_amt").value);
+  if(!name||!(amount>=0)||$("c_amt").value===""){toast("Add the customer's name and their bill.");return}
+  if(s.customers.length>=MAX){toast("This account already has 5 customers.");return}
+  s.customers.push({name,amount,paid:false});
+  store();csheet.classList.remove("open");render();
+};
+$("t1").onclick=()=>{tab=1;render()};$("t2").onclick=()=>{tab=2;render()};
+render();
+(async()=>{
+  let db=null;
+  try{db=window.claude&&await claude.use("db")}catch(e){}
+  if(!db){subs=local;local=[];ready=true;render();return}
+  try{const u=await claude.use("user");const c=u?await u.can("data.write"):null;if(c===false)canWrite=false}catch(e){}
+  col=db.collection("accounts");
+  col.onSnapshot(snap=>{
+    subs=snap.docs.map(d=>({...clean(d.data()),id:d.id}));
+    Object.keys(last).forEach(k=>delete last[k]);subs.forEach(x=>{last[x.id]=JSON.stringify(x)});
+    ready=true;render();
+  },e=>{ready=true;toast("Couldn't load shared data.");render()});
+})();
+</script></body></html>
