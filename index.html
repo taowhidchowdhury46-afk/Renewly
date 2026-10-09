@@ -41,6 +41,12 @@ h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.02em}
 .acts{flex-wrap:wrap}.btn:disabled{opacity:.55}
 .sub{color:var(--mute);margin:0 0 14px;font-size:14px}
 .ro .fab,.ro .acts,.ro .x{display:none}.ro .st{pointer-events:none}
+#search{margin-bottom:14px}.sr{display:flex;gap:8px;align-items:center}.sr input{flex:1;width:auto;min-width:0}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px}
+.chip2{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:99px}
+.chip2.on{background:var(--acc);color:var(--accInk);border-color:var(--acc)}
+.qinfo{font-size:14px;color:var(--mute);margin-top:8px}
+.foot{text-align:center;color:var(--mute);font-size:13px;margin-top:28px}
 .cap{font-size:13px;font-weight:600;color:var(--mute);margin-top:12px}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:5}
 .sheet.open{display:flex}
@@ -56,22 +62,31 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
   <p class="sub" id="status"></p>
   <div id="imp"></div>
   <div class="tabs"><button id="t1" class="on">Accounts</button><button id="t2">Who owes me</button></div>
+  <div id="search" style="display:none">
+    <input id="q" type="search" placeholder="Search account or customer" aria-label="Search account or customer">
+    <label for="qd">Renewing on date</label>
+    <div class="sr"><input id="qd" type="date"><button class="btn" id="qclear">Clear</button></div>
+    <div class="chips" id="chips" aria-label="Renewals by date"></div>
+    <div class="qinfo" id="qinfo"></div>
+  </div>
   <div id="view"></div>
+  <div class="foot">Created by Taowhid Chowdhury</div>
 </main>
 <button class="fab" id="add">+ Add account</button>
 <div class="toast" id="toast" role="status"></div>
 
 <div class="sheet" id="sheet"><div class="panel">
-  <h2 style="margin:0 0 4px">Add account</h2>
+  <h2 style="margin:0 0 4px" id="stitle">Add account</h2>
   <label for="f_name">Account name</label><input id="f_name" placeholder="Netflix Premium #1">
   <div class="two">
     <div><label for="f_amt">Account price (৳)</label><input id="f_amt" type="number" inputmode="decimal" placeholder="1200"></div>
     <div><label for="f_cycle">Repeats</label><select id="f_cycle"><option value="30">Every 30 days</option><option value="45">Every 45 days</option><option value="60">Every 60 days</option><option value="180">Every 180 days</option><option value="365">Every 365 days</option></select></div>
   </div>
+  <label for="f_date" id="fdl">Last renewed on (optional)</label><input id="f_date" type="date">
   <div>
     <div><label for="f_method">Pay with</label><select id="f_method"><option>bKash</option><option>Nagad</option><option>Rocket</option><option>Card</option><option>Bank</option><option>Cash</option></select></div>
   </div>
-  <div class="hint">A new account starts at 0 days. Tap Mark renewed to start the countdown. You can add up to 5 customers after saving.</div>
+  <div class="hint" id="fhint">Leave the date empty to start at 0 days. For an older account, enter the day it was last renewed: the countdown becomes that date plus the plan days. You can add up to 5 customers after saving.</div>
   <div class="acts"><button class="btn p" id="save">Save account</button><button class="btn" id="cancel">Cancel</button></div>
 </div></div>
 
@@ -85,7 +100,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 <script>
 const $=id=>document.getElementById(id);
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2600)}
-const shown=new Set();const MAX=5;let subs=[],tab=1,pending=null,curAcc=null;
+const shown=new Set();const MAX=5;let subs=[],tab=1,pending=null,curAcc=null,curCust=null,editing=null;
 let local=[];try{local=JSON.parse(localStorage.getItem("renewly")||"[]")}catch(e){}
 let col=null,canWrite=true,ready=false;const q={},last={};
 const clean=o=>JSON.parse(JSON.stringify(o));
@@ -114,16 +129,34 @@ local.forEach(s=>{
   delete s.with;
   if(s.lastRenewed&&days(s.date)>Number(s.cycle)){s.date=advance(s.lastRenewed,s.cycle);if(s.undo)s.undo.date=s.lastRenewed}
 });
+let qText="",qDate="";
+const shortD=d=>{const x=new Date(d+"T00:00"),o={day:"numeric",month:"short"};if(x.getFullYear()!=new Date().getFullYear())o.year="numeric";return x.toLocaleDateString("en-GB",o)};
+function filtered(){
+  return subs.filter(s=>(!qText||s.name.toLowerCase().includes(qText)||s.customers.some(c=>c.name.toLowerCase().includes(qText)))&&(!qDate||s.date==qDate));
+}
+function pickD(d){qDate=qDate==d?"":d;$("qd").value=qDate;render()}
+function searchUI(){
+  const box=$("search"),on=tab==1&&subs.length>0;
+  box.style.display=on?"block":"none";
+  if(!on)return;
+  const by={};subs.forEach(s=>{by[s.date]=(by[s.date]||0)+1});
+  $("chips").innerHTML=Object.keys(by).sort().slice(0,14).map(d=>`<button class="chip2 ${qDate==d?"on":""}" onclick="pickD('${d}')">${shortD(d)} · ${by[d]}</button>`).join("");
+  const l=filtered(),n=l.length,tot=l.reduce((a,s)=>a+s.amount,0);
+  $("qinfo").textContent=qDate?(n?`${n} account${n==1?"":"s"} renew${n==1?"s":""} on ${fmtD(qDate)} · ${money(tot)} total`:`No accounts renew on ${fmtD(qDate)}.`):qText?`${n} of ${subs.length} accounts match.`:"Tap a date above to see which accounts renew that day.";
+}
 function render(){
   $("t1").classList.toggle("on",tab==1);$("t2").classList.toggle("on",tab==2);
   document.body.classList.toggle("ro",!canWrite);
   $("status").textContent=!col?"Saved on this phone only":canWrite?"Shared: changes sync live for everyone with access":"View only: you can't make changes";
   $("imp").innerHTML=(col&&canWrite&&local.length)?`<div class="item"><div class="name">Import from this phone</div><div class="meta">Found ${local.length} account${local.length>1?"s":""} saved here before sharing. Import to add ${local.length>1?"them":"it"} to the shared list.</div><div class="acts"><button class="btn p" onclick="importLocal()">Import</button></div></div>`:"";
+  searchUI();
   $("view").innerHTML=!ready?`<div class="empty">Loading…</div>`:tab==1?accounts():owes();
 }
 function accounts(){
   if(!subs.length)return `<div class="empty">No accounts yet.<br>Tap <b>+ Add account</b>, then add up to 5 customers to each one.<br><br><button class="btn" onclick="demo()">Load examples</button></div>`;
-  return [...subs].sort((a,b)=>a.date<b.date?-1:1).map(s=>{
+  const list=filtered();
+  if(!list.length)return `<div class="empty">No accounts match your search.</div>`;
+  return list.sort((a,b)=>a.date<b.date?-1:1).map(s=>{
     const n=days(s.date),c=s.customers,un=c.filter(x=>!x.paid),owed=un.reduce((a,x)=>a+x.amount,0);
     const cap=c.length?`${c.length}/${MAX} customers · ${un.length?`${un.length} unpaid (${money(owed)})`:"all paid"}`:`0/${MAX} customers`;
     return `<div class="item"><div class="row"><div><div class="name">${esc(s.name)}</div>
@@ -132,8 +165,9 @@ function accounts(){
       <div class="cap">${cap}</div>
       ${c.map((x,i)=>`<div class="cust"><div><div class="cn">${esc(x.name)}</div><div class="cm">${money(x.amount)}</div></div>
         <div><button class="st ${x.paid?"pd":"up"}" onclick="pay('${s.id}',${i})">${x.paid?"Paid":"Unpaid"}</button>
-        <button class="x" onclick="rmc('${s.id}',${i})">${pending==s.id+"/"+i?"Sure?":"Remove"}</button></div></div>`).join("")}
+        <button class="x" onclick="editCu('${s.id}',${i})">Edit</button><button class="x" onclick="rmc('${s.id}',${i})">${pending==s.id+"/"+i?"Sure?":"Remove"}</button></div></div>`).join("")}
       <div class="acts"><button class="btn" onclick="addC('${s.id}')" ${c.length>=MAX?"disabled":""}>+ Add customer</button>
+      <button class="btn" onclick="editA('${s.id}')">Edit</button>
       ${renewedNow(s)?`<button class="btn" disabled>Renewed this month</button><button class="btn" onclick="undo('${s.id}')">Undo</button>`:`<button class="btn p" onclick="renew('${s.id}')">${pending=="r"+s.id?"Tap again to renew":"Mark renewed"}</button>`}
       <button class="btn d" onclick="del('${s.id}')">${pending==s.id?"Tap again":"Delete"}</button></div></div>`}).join("");
 }
@@ -192,33 +226,64 @@ function demo(){
   store();render();
 }
 const sheet=$("sheet"),csheet=$("csheet");
-$("add").onclick=()=>{["f_name","f_amt"].forEach(i=>$(i).value="");sheet.classList.add("open")};
+function openAcc(){
+  $("stitle").textContent=editing?"Edit account":"Add account";
+  $("fdl").textContent=editing?"Next due date":"Last renewed on (optional)";
+  $("fhint").textContent=editing?"Changing the date or plan does not change who has paid.":"Leave the date empty to start at 0 days. For an older account, enter the day it was last renewed: the countdown becomes that date plus the plan days. You can add up to 5 customers after saving.";
+  $("save").textContent=editing?"Save changes":"Save account";
+  if(editing)$("f_date").removeAttribute("max");else $("f_date").max=iso(today());
+  sheet.classList.add("open");
+}
+$("add").onclick=()=>{editing=null;["f_name","f_amt","f_date"].forEach(i=>$(i).value="");openAcc()};
+function editA(id){
+  const s=subs.find(x=>x.id==id);editing=id;
+  $("f_name").value=s.name;$("f_amt").value=s.amount;$("f_cycle").value=String(s.cycle);$("f_method").value=s.method;$("f_date").value=s.date;
+  openAcc();
+}
 $("cancel").onclick=()=>sheet.classList.remove("open");
 sheet.onclick=e=>{if(e.target==sheet)sheet.classList.remove("open")};
 $("save").onclick=()=>{
-  const name=$("f_name").value.trim(),amount=parseFloat($("f_amt").value),date=iso(today());
+  const name=$("f_name").value.trim(),amount=parseFloat($("f_amt").value),rd=$("f_date").value,cycle=Number($("f_cycle").value);
   if(!name||!(amount>0)){toast("Add a name and a price above 0.");return}
-  subs.push({id:"s"+Date.now(),name,amount,cycle:Number($("f_cycle").value),date,method:$("f_method").value,customers:[]});
+  if(editing){
+    if(!rd){toast("Pick the next due date.");return}
+    const e=subs.find(x=>x.id==editing);
+    if(e.date!=rd){e.date=rd;e.lastRenewed=null;delete e.undo}
+    e.name=name;e.amount=amount;e.cycle=cycle;e.method=$("f_method").value;
+    editing=null;store();sheet.classList.remove("open");render();toast("Saved.");return;
+  }
+  if(rd&&rd>iso(today())){toast("The renewal date can't be in the future.");return}
+  const date=rd?advance(rd,cycle):iso(today());
+  subs.push({id:"s"+Date.now(),name,amount,cycle,date,method:$("f_method").value,customers:[]});
   store();sheet.classList.remove("open");render();
 };
-function addC(id){curAcc=id;const s=subs.find(x=>x.id==id);$("ctitle").textContent=`Add customer to ${s.name}`;$("c_name").value="";$("c_amt").value="";csheet.classList.add("open")}
+function addC(id){curAcc=id;curCust=null;const s=subs.find(x=>x.id==id);$("ctitle").textContent=`Add customer to ${s.name}`;$("csave").textContent="Save customer";$("c_name").value="";$("c_amt").value="";csheet.classList.add("open")}
+function editCu(id,i){curAcc=id;curCust=i;const x=subs.find(a=>a.id==id).customers[i];$("ctitle").textContent="Edit customer";$("csave").textContent="Save changes";$("c_name").value=x.name;$("c_amt").value=x.amount;csheet.classList.add("open")}
 $("ccancel").onclick=()=>csheet.classList.remove("open");
 csheet.onclick=e=>{if(e.target==csheet)csheet.classList.remove("open")};
 $("csave").onclick=()=>{
   const s=subs.find(x=>x.id==curAcc),name=$("c_name").value.trim(),amount=parseFloat($("c_amt").value);
   if(!name||!(amount>=0)||$("c_amt").value===""){toast("Add the customer's name and their bill.");return}
-  if(s.customers.length>=MAX){toast("This account already has 5 customers.");return}
-  s.customers.push({name,amount,paid:false});
+  if(curCust!=null){const x=s.customers[curCust];x.name=name;x.amount=amount;curCust=null}
+  else{
+    if(s.customers.length>=MAX){toast("This account already has 5 customers.");return}
+    s.customers.push({name,amount,paid:false});
+  }
   store();csheet.classList.remove("open");render();
 };
+$("q").oninput=e=>{qText=e.target.value.trim().toLowerCase();render()};
+$("qd").oninput=e=>{qDate=e.target.value;render()};
+$("qclear").onclick=()=>{qText="";qDate="";$("q").value="";$("qd").value="";render()};
 $("t1").onclick=()=>{tab=1;render()};$("t2").onclick=()=>{tab=2;render()};
 render();
 (async()=>{
   let db=null;
-  try{db=window.claude&&await claude.use("db")}catch(e){}
+  const wait=(ms,v)=>new Promise(r=>setTimeout(()=>r(v),ms));
+  try{db=window.claude&&await Promise.race([claude.use("db"),wait(4000,null)])}catch(e){}
   if(!db){subs=local;local=[];ready=true;render();return}
-  try{const u=await claude.use("user");const c=u?await u.can("data.write"):null;if(c===false)canWrite=false}catch(e){}
+  try{const u=await Promise.race([claude.use("user"),wait(3000,null)]);const c=u?await Promise.race([u.can("data.write"),wait(3000,null)]):null;if(c===false)canWrite=false}catch(e){}
   col=db.collection("accounts");
+  setTimeout(()=>{if(!ready){ready=true;render();toast("Shared data is slow to load.")}},6000);
   col.onSnapshot(snap=>{
     subs=snap.docs.map(d=>({...clean(d.data()),id:d.id}));
     Object.keys(last).forEach(k=>delete last[k]);subs.forEach(x=>{last[x.id]=JSON.stringify(x)});
